@@ -1,0 +1,229 @@
+Nodejs la 1 server-side Javascript runtime environment, dung tren google v8 engine.
+1 nodejs app chay tren 1 process don, khong can 1 thread cho tung request.
+nodejs cung cap 1 tap cac async I/O giup nodejs khong block thread khi thuc hien cac tac vu I/O nhu doc file tu network, truy cap database
+Thay vi dung luong chay va doi xu ly, nodejs se tiep tuc tac vu va khi co response cua I/O thi nodejs se resume lai tac vu I/O truoc do.
+
+-> cho phep nodejs xu ly hang ngan ket noi dong thoi voi chi 1 server.
+
+Blocking: khi thuc thi tac vu js trong 1 nodejs process ma phai doi 1 tien trinh khac thuc hien xong.
+* Tat ca I/O methods trong thu vien chuan cua node deu ho tro async voi callbacks. 1 so method co blocking version voi duoi ket thuc bang 'Sync'
+
+Blocking method thuc thi dong bo (synchronously), Non-blocking method thuc thi bat dong bo (asynchronously)
+
+Blocking ex:
+	const fs = require('fs');
+
+	const data = fs.readFileSync('/file.md'); // blocks here until file is read
+	console.log(data);
+	moreWork(); // will run after console.log
+
+Non-blocking ex:
+	const fs = require('fs');
+
+	fs.readFile('/file.md', (err, data) => {
+	  if (err) throw err;
+	  console.log(data);
+	});
+	moreWork(); // will run before console.log because js continue works in non-blocking
+
+* khong nen mix non-blocking code voi blocking code:
+	const fs = require('fs');
+
+	fs.readFile('/file.md', (err, data) => {
+	  if (err) throw err;
+	  console.log(data);
+	});
+	fs.unlinkSync('/file.md');
+-> fs.unlinkSync co the chay truoc fs.readFile.
+-> can chuyen doi code ve non-blocking:
+	const fs = require('fs');
+
+	fs.readFile('/file.md', (readFileErr, data) => {
+	  if (readFileErr) throw readFileErr;
+	  console.log(data);
+	  fs.unlink('/file.md', unlinkErr => {
+		if (unlinkErr) throw unlinkErr;
+	  });
+	});
+
+* Mac dinh, Js la dong bo(sync) va la 1 thread don. code khong the tao 1 thread moi va chay song song.
+* Asynchronous: nhung thu xay ra hoan toan doc lap voi luong chay chinh cua chuong trinh (main program flow)
+* De thuc hien async, js thuong dung callback.
+NOdejs ho tro error-first callback voi param dau tien la error object
+	const fs = require('fs');
+
+	fs.readFile('/file.json', (err, data) => {
+	  if (err) {
+		// handle error
+		console.log(err);
+		return;
+	  }
+
+	  // no errors, process data
+	  console.log(data);
+	});
+* neu error object la null -> khong co loi
+* Tu ES6, ta co them Promises va Async/Await de thuc hien async operations.
+
+Moi lan event loop chay duoc 1 vong hoan chinh, ta goi do la 1 tick
+khi truyen 1 function vao process.nextTick(), ta chi dan engine chay function do vao cuoi tac vu hien tai, truoc event loop tick sau do.
+
+	process.nextTick(() => {
+	  // do something
+	});
+Day la cach ta yeu cau js engine xu ly function async(sau tac vu hien tai) ngay khi co the ma khong queue function.
+
+* setTimeout(() => {}, 0) se chay function vao cuoi pha cua next tick
+* nextTick() se chay function ngay pha dau cua next tick
+Ex:
+	console.log("Hello => number 1");
+
+	setImmediate(() => {
+	  console.log("Running before the timeout => number 3");
+	});
+
+	setTimeout(() => {
+	  console.log("The timeout running last => number 4");
+	}, 0);
+
+	process.nextTick(() => {
+	  console.log("Running at next tick => number 2");
+	});
+->  Hello => number 1
+	Running at next tick => number 2
+	Running before the timeout => number 3
+	The timeout running last => number 4
+	
+* setTimeout(): delay function execute.
+	id = setTimeout(() => {
+	  // runs after 2 seconds
+	}, 2000);
+* zero delay: setTimeout((), 0): callback function se duoc chay ngay khi co the nhung phai sau tac vu hien tai
+	setTimeout(() => {
+	  console.log('after ');
+	}, 0);
+	console.log(' before ');
+	
+-> 	before
+	after
+
+* setInterval(): lap lai callback function theo 1 khoang thoi gian
+	const interval = setInterval(() => {
+	  if (App.somethingIWait === 'arrived') {
+		clearInterval(interval);
+	  }
+	  // otherwise do things
+	}, 100);
+
+* Thoi gian chay callback function trong setInterval co the anh huong do network,..., -> thoi gian chay lon hon thoi gian interval
+-> ta dung recursive setTimeout():
+	const myFunction = () => {
+	  // do something
+
+	  setTimeout(myFunction, 1000);
+	};
+
+	setTimeout(myFunction, 1000);
+
+* Nodejs cung cap setTimeout, setInterval trong Timer module.
+* Nodejs cung cap setImmediate <=> zero delay setTimeout, thuong duoc dung voi Nodejs Event Loop
+* setImmediate(): cac function truyen vao ham nay deu chay trong lan lap tiep theo vua event loop
+
+* function chay trong process.nextTick() se duoc chay o lan lap hien tai cua event loop, sau tien trinh hien tai ket thuc
+-> luon luon chay truoc setTimeout, setImmediate
+* setImmediate/setTimeout: deu chay o lan lap tiep theo cua event loop
+
+* callback cua process.nextTick duoc them vao process.nextTick queue
+* callback cua Promises.then() duoc them vao promises microtask queue
+* callback cua setImmediate/setTimeout duoc them vao macrotask queue
+
+-> Event loop chay task trong process.nextTick queue dau tien, sau do den promises microtask queue, roi den macrotask queue.
+
+* Nodejs Event emitter:
+Node js cung cap module event chua class EventEmitter nham cung cap cho dev cach tao cac event tuong tu nhu front-end: onMouseClick,...
+
+const EventEmitter = require('events');
+const eventEmitter = new EventEmitter();
+
+EventEmitter cung cap 2 method on va emit
+* on: de them callback function se duoc chay khi co event
+* emit: phat 1 su kien
+
+	eventEmitter.on('start', () => {
+	  console.log('started');
+	});
+	eventEmitter.emit('start');
+
+* EventEmitter once(): them 1 one-time listener
+* EventEmitter removeListener()/off(): bo 1 event listener tu 1 event
+* EventEmitter removeAllListener()
+
+* Tuong tac voi file trong Nodejs
+* Nodejs cung cap fs module de tuong tac voi file
+
+Dung function stat() de lay thong tin file:
+	const fs = require('fs');
+
+	fs.stat('/Users/joe/test.txt', (err, stats) => {
+	  if (err) {
+		console.error(err);
+	  }
+	  // we have access to the file stats in `stats`
+	});
+
+* Nodejs cung cap sync method:
+	const fs = require('fs');
+
+	try {
+	  const stats = fs.statSync('/Users/joe/test.txt');
+	} catch (err) {
+	  console.error(err);
+	}
+-> check file la thu muc hoac file ta dung stats.isFile() and stats.isDirectory()
+-> check file la symbolic link ta dung stats.isSymbolicLink()
+-> check file size(bytes) ta dung stats.size
+
+Co the dung o dang Promises duoc cung cap tu module fs/promises
+	const fs = require('fs/promises');
+
+	async function example() {
+	  try {
+		const stats = await fs.stat('/Users/joe/test.txt');
+		stats.isFile(); // true
+		stats.isDirectory(); // false
+		stats.isSymbolicLink(); // false
+		stats.size; // 1024000 //= 1MB
+	  } catch (err) {
+		console.log(err);
+	  }
+	}
+	example();
+
+* Moi file deu co path, tuy vao os thi path se duoc viet khac nhau:
+MacOs/Linux: /users/joe/file.txt
+Windows: C:\users\joe\file.txt
+
+De tuong tac voi path trong nodejs, ta dung:
+	const path = require('path');
+ta co the lay thong tin tu path voi cac method sau:
+	const notes = '/users/joe/notes.txt';
+
+	path.dirname(notes); // /users/joe -> parent folder cua file
+	path.basename(notes); // notes.txt -> filename + extension part
+	path.basename(notes, path.extname(notes)); // notes -> only filename
+	path.extname(notes); // .txt -> extension part
+
+* Noi nhieu phan de tao path -> path.join()
+	const name = 'joe';
+	path.join('/', 'users', name, 'notes.txt'); // '/users/joe/notes.txt'
+* get absolute path tu relative path -> path.resolve()
+	path.resolve('joe.txt'); // '/Users/joe/joe.txt' if run from my home folder
+-> voi 1 argu, resolve se lay working directory
+-> voi 2 argu, resolve se lay directory cua argu dau cho directory cua argu thu 2
+	path.resolve('tmp', 'joe.txt'); // '/Users/joe/tmp/joe.txt' if run from my home folder
+-> neu argu dau co '/', thi path se la absolute path
+	path.resolve('/etc', 'joe.txt'); // '/etc/joe.txt'
+-> get actual path tu relative path -> path.normalize()
+	path.normalize('/users/joe/..//test.txt'); // '/users/test.txt'
+
+*** Ca path.resolve va path.normalize deu khong check path co ton tai hay khong
