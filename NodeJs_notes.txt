@@ -226,4 +226,260 @@ ta co the lay thong tin tu path voi cac method sau:
 -> get actual path tu relative path -> path.normalize()
 	path.normalize('/users/joe/..//test.txt'); // '/users/test.txt'
 
-*** Ca path.resolve va path.normalize deu khong check path co ton tai hay khong
+*** Ca path.resolve va path.normalize deu khong check path co ton tai hay khong?
+
+* Working with file descriptors
+Truoc khi lam viec voi 1 file trong filesystem, ta can biet file descriptors
+
+1 file descriptor la 1 tham chieu toi 1 file, 1 so (fd) duoc tra lai khi dung method open() cua fs module.
+fd number la duy nhat trong he dieu hanh
+
+	const fs = require('fs');
+
+	fs.open('/Users/joe/test.txt', 'r', (err, fd) => {
+	  // fd is our file descriptor
+	});
+
+'r' flag: open file de doc (read)
+'r+' flag: open file de doc va ghi (khong tao file neu file do khong ton tai)
+'w+' flag: giong r+, de con tro o vi tri dau file (tao file moi neu khong ton tai)
+'a' flag: open file de write, de con tro o vi tri cuoi file (tao file moi neu khong ton tai)
+'a+' flag: ope file de read va write, de con tro o vi tri cuoi file (tao file moi neu khong ton tai)
+
+co the dung fs.openSync() voi blocking, method nay return lai file descriptor thi vi o callback
+	const fs = require('fs');
+
+	try {
+	  const fd = fs.openSync('/Users/joe/test.txt', 'r');
+	} catch (err) {
+	  console.error(err);
+	}
+
+Mot khi co file descriptor, co the thuc hien tat ca cac tac vu yeu cau fd nhu: fs.close(),...
+
+Co the mo file bang Promises-based fsPromises.open():
+	const fs = require('fs/promises');
+	// Or const fs = require('fs').promises before v14.
+	async function example() {
+	  let filehandle;
+	  try {
+		filehandle = await fs.open('/Users/joe/test.txt', 'r');
+		console.log(filehandle.fd);
+		console.log(await filehandle.readFile({ encoding: 'utf8' }));
+	  } finally {
+		if (filehandle) await filehandle.close();
+	  }
+	}
+	example();
+
+* Doc files
+cach don gian nhat de read file la dung fs.readFile()
+	const fs = require('fs');
+
+	fs.readFile('/Users/joe/test.txt', 'utf8', (err, data) => {
+	  if (err) {
+		console.error(err);
+		return;
+	  }
+	  console.log(data);
+	});
+
+hoac dung fs.readFileSync():
+	const fs = require('fs');
+
+	try {
+	  const data = fs.readFileSync('/Users/joe/test.txt', 'utf8');
+	  console.log(data);
+	} catch (err) {
+	  console.error(err);
+	}
+
+hoac dung Promises-based
+	const fs = require('fs/promises');
+
+	async function example() {
+	  try {
+		const data = await fs.readFile('/Users/joe/test.txt', { encoding: 'utf8' });
+		console.log(data);
+	  } catch (err) {
+		console.log(err);
+	  }
+	}
+	example();
+
+*** Ca 3 ham tren deu read tat ca noi dung file trong memory truoc khi tra ve data.
+-> neu file lon co the gay cham tac vu, ton bo nho.
+-> doc file bang streams
+
+* Writing files
+Dung fs.writeFile():
+	const fs = require('fs');
+
+	const content = 'Some content!';
+
+	fs.writeFile('/Users/joe/test.txt', content, err => {
+	  if (err) {
+		console.error(err);
+	  }
+	  // file written successfully
+	});
+
+Dung synchronous method fs.writeFileSync:
+	const fs = require('fs');
+
+	const content = 'Some content!';
+
+	try {
+	  fs.writeFileSync('/Users/joe/test.txt', content);
+	  // file written successfully
+	} catch (err) {
+	  console.error(err);
+	}
+
+Dung promises-base:
+	const fs = require('fs/promises');
+
+	async function example() {
+	  try {
+		const content = 'Some content!';
+		await fs.writeFile('/Users/joe/test.txt', content);
+	  } catch (err) {
+		console.log(err);
+	  }
+	}
+	example();
+
+** Mac dinh, 3 method tren se thay the noi dung file da co bang noi dung moi (ghi de)
+-> chinh flag de write
+	fs.writeFile('/Users/joe/test.txt', content, { flag: 'a+' }, err => {});
+
+* Them noi dung vao cuoi file dung fs.appendFile():
+	const fs = require('fs');
+
+	const content = 'Some content!';
+
+	fs.appendFile('file.log', content, err => {
+	  if (err) {
+		console.error(err);
+	  }
+	  // done!
+	});
+
+Dung voi promises:
+	const fs = require('fs/promises');
+
+	async function example() {
+	  try {
+		const content = 'Some content!';
+		await fs.appendFile('/Users/joe/test.txt', content);
+	  } catch (err) {
+		console.log(err);
+	  }
+	}
+	example();
+
+** Check file ton tai?
+dung fs.access() hoac fsPromises.access()
+
+** Tao folder
+Dung fs.mkdir(), fs.mkdirSync(), fsPromises.mkdir():
+	const fs = require('fs');
+
+	const folderName = '/Users/joe/test';
+
+	try {
+	  if (!fs.existsSync(folderName)) {
+		fs.mkdirSync(folderName);
+	  }
+	} catch (err) {
+	  console.error(err);
+	}
+
+** Read content of directory:
+Dung fs.readdir() or fs.readdirSync() or fsPromises.readdir()
+-> doc noi dung cua 1 folder, ca file va folder con, va tra lai relative path
+	const fs = require('fs');
+
+	const folderPath = '/Users/joe';
+
+	fs.readdirSync(folderPath);
+
+* Lay full path cua file trong folder
+	fs.readdirSync(folderPath).map(fileName => {
+	  return path.join(folderPath, fileName);
+	});
+
+* Filter result with only files:
+	const isFile = fileName => {
+	  return fs.lstatSync(fileName).isFile();
+	};
+
+	fs.readdirSync(folderPath)
+	  .map(fileName => {
+		return path.join(folderPath, fileName);
+	  })
+	  .filter(isFile);
+
+* Doi ten folder:
+fs.rename() or fs.renameSync() or fsPromises.rename(), tham so dau la current path, tham so thu 2 la path moi.
+
+	const fs = require('fs');
+
+	fs.rename('/Users/joe', '/Users/roger', err => {
+	  if (err) {
+		console.error(err);
+	  }
+	  // done
+	});
+Blocking:
+	const fs = require('fs');
+
+	try {
+	  fs.renameSync('/Users/joe', '/Users/roger');
+	} catch (err) {
+	  console.error(err);
+	}
+Promises:
+	const fs = require('fs/promises');
+
+	async function example() {
+	  try {
+		await fs.rename('/Users/joe', '/Users/roger');
+	  } catch (err) {
+		console.log(err);
+	  }
+	}
+	example();
+
+** Remove folder
+fs.rmdir() or fs.rmdirSync() or fsPromises.rmdir():
+
+	const fs = require('fs');
+
+	fs.rmdir(dir, err => {
+	  if (err) {
+		throw err;
+	  }
+
+	  console.log(`${dir} is deleted!`);
+	});
+
+* Neu folder can remove co noi dung thi dung fs.rm() voi option {recursive: true}
+* { recursive: true, force: true } bo qua exception neu folder khong ton tai
+
+	const fs = require('fs');
+
+	fs.rm(dir, { recursive: true, force: true }, err => {
+	  if (err) {
+		throw err;
+	  }
+
+	  console.log(`${dir} is deleted!`);
+	});
+
+* Doc environment variable bang nodejs qua process.env.[envKey]
+	require('dotenv').config();
+
+	process.env.USER_ID; // "239482"
+	process.env.USER_KEY; // "foobar"
+	process.env.NODE_ENV; // "development"
