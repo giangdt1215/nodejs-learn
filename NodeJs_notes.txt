@@ -483,3 +483,8 @@ fs.rmdir() or fs.rmdirSync() or fsPromises.rmdir():
 	process.env.USER_ID; // "239482"
 	process.env.USER_KEY; // "foobar"
 	process.env.NODE_ENV; // "development"
+
+** Nodejs khong ho tro het http verb(get, post, delete,..), khong ho tro route, static files, cac template tao response -> Dung Express framework
+
+** Express ho tro HTTP verbs request
+** Tich hop view engine template
