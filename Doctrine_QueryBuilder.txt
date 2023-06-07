@@ -1,0 +1,120 @@
+QueryBuilder cung cap API de xay dung DQL
+
++ Tao QueryBuilder
+// example1: creating a QueryBuilder instance
+$qb = $em->createQueryBuilder();
+
++ xem loai queryBuilder
+// example2: retrieving type of QueryBuilder
+echo $qb->getType(); // Prints: 0
+
+* 0: QueryBuilder::SELECT
+* 1: QueryBuilder::DELETE
+* 2: QueryBuilder::UPDATE
+
+// example3: retrieve the associated EntityManager
+$em = $qb->getEntityManager();
+
+// example4: retrieve the DQL string of what was defined in QueryBuilder
+$dql = $qb->getDql();
+
+// example5: retrieve the associated Query object with the processed DQL
+$q = $qb->getQuery();
+
+** 1 QueryBuilder co 2 state:
+QueryBuilder::STATE_CLEAN -> DQL khong bi chinh sua tu khi khoi tao
+QueryBuilder::STATE_DIRTY -> DQL query se bi chinh sua tu lan truy xuat tiep theo
+
+DQL: select u FROM User u WHERE u.id = ?1 ORDER BY u.name
+<?php
+// $qb instanceof QueryBuilder
+
+$qb->select('u')
+   ->from('User', 'u')
+   ->where('u.id = ?1')
+   ->orderBy('u.name', 'ASC');
+   
+* $qb->expr()->* la dinh dang xay dung bieu thuc dieu kien trong lenh query
+<?php
+// $qb instanceof QueryBuilder
+
+$qb->select(array('u')) // string 'u' is converted to array internally
+   ->from('User', 'u')
+   ->where($qb->expr()->orX(
+       $qb->expr()->eq('u.id', '?1'),
+       $qb->expr()->like('u.nickname', '?2')
+   ))
+   ->orderBy('u.surname', 'ASC');
+
+=> DQL: select Array(u) FROM User u
+WHERE u.id = ?1 OR u.nickname LIKE ?2
+ORDER BY u.surname 
+
++ bind parameter: bind qua numerical (?1,?2) hoac string (:identifier)
+<?php
+// $qb instanceof QueryBuilder
+
+$qb->select('u')
+   ->from('User', 'u')
+   ->where('u.id = ?1')
+   ->orderBy('u.name', 'ASC')
+   ->setParameter(1, 100); // Sets ?1 to 100, and thus we will fetch a user with u.id = 100
+   
+<?php
+// $qb instanceof QueryBuilder
+
+$qb->select('u')
+   ->from('User', 'u')
+   ->where('u.id = :identifier')
+   ->orderBy('u.name', 'ASC')
+   ->setParameter('identifier', 100); // Sets :identifier to 100, and thus we will fetch a user with u.id = 100
+   
++ Limit result:
+<?php
+// $qb instanceof QueryBuilder
+$offset = (int)$_GET['offset'];
+$limit = (int)$_GET['limit'];
+
+$qb->add('select', 'u')
+   ->add('from', 'User u')
+   ->add('orderBy', 'u.name ASC')
+   ->setFirstResult( $offset )
+   ->setMaxResults( $limit );
+   
++ De chay query, can get query object tu QueryBuilder
+// $qb instanceof QueryBuilder
+	$query = $queryBuilder->getQuery();
+// Execute Query
+	$result = $query->getResult();
+	$iterableResult = $query->toIterable();
+	$single = $query->getSingleResult();
+	$array = $query->getArrayResult();
+	$scalar = $query->getScalarResult();
+	$singleScalar = $query->getSingleScalarResult();
+
++ QueryBuilder cung cap add() nhan tham so Expr class the hien expression
+<?php
+// $qb instanceof QueryBuilder
+
+// example8: QueryBuilder port of:
+// "SELECT u FROM User u WHERE u.id = ? OR u.nickname LIKE ? ORDER BY u.name ASC" using Expr class
+$qb->add('select', new Expr\Select(array('u')))
+   ->add('from', new Expr\From('User', 'u'))
+   ->add('where', $qb->expr()->orX(
+       $qb->expr()->eq('u.id', '?1'),
+       $qb->expr()->like('u.nickname', '?2')
+   ))
+   ->add('orderBy', new Expr\OrderBy('u.name', 'ASC'));
+
+** $qb->expr()->*
+$qb->expr()->andX
+$qb->expr()->orX
+$qb->expr()->eq $qb->expr()->neq
+$qb->expr()->lt $qb->expr()->lte
+$qb->expr()->isNull $qb->expr()->isNotNull('u.id') => u.id IS NOT NULL
+$qb->expr()->isInstanceOf('u', Employee::class) => u INSTANCE OF Employee
+$qb->expr()->sum('u.id', '2') => u.id + 2
+$qb->expr()->like('u.firstname', $qb->expr()->literal('Gui%'))
+$qb->expr()->between('u.id', '1', '10')
+$qb->expr()->trim('u.firstname')
+$qb->expr()->count('u.firstname')
