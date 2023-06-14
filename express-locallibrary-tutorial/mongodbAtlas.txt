@@ -1,0 +1,5 @@
+mongodb atlas
+gianggiang1512
+Un5gmryod7ED72We
+
+mongodb+srv://gianggiang1512:Un5gmryod7ED72We@cluster0.k3sdmmk.mongodb.net/local_library?retryWrites=true&w=majority
