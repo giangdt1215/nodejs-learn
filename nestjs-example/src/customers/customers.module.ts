@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { CustomersController } from './controllers/customers/customers.controller';
 import { CustomersService } from './services/customers/customers.service';
 import { ValidateCustomerMiddleware } from './middlewares/validate-customer.middleware';
@@ -9,23 +14,25 @@ import { Request, Response, NextFunction } from 'express';
   controllers: [CustomersController],
   providers: [CustomersService],
 })
-export class CustomersModule implements NestModule{
+export class CustomersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(
-      ValidateCustomerMiddleware, 
-      ValidateCustomerAccountMiddleware,
-      (req: Request, res: Response, next: NextFunction) => {
-        console.log('the third middleware as functional');
-        next();
+    consumer
+      .apply(
+        ValidateCustomerMiddleware,
+        ValidateCustomerAccountMiddleware,
+        (req: Request, res: Response, next: NextFunction) => {
+          console.log('the third middleware as functional');
+          next();
+        },
+      )
+      // .forRoutes({
+      //   path: 'customers/search/:id',
+      //   method: RequestMethod.GET,
+      // });
+      .exclude({
+        path: 'customers/search/:id',
+        method: RequestMethod.GET,
       })
-    // .forRoutes({
-    //   path: 'customers/search/:id',
-    //   method: RequestMethod.GET,
-    // });
-    .exclude({
-      path: 'customers/search/:id',
-      method: RequestMethod.GET,
-    })
-    .forRoutes(CustomersController)
+      .forRoutes(CustomersController);
   }
 }

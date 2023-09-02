@@ -4,22 +4,23 @@ import { Customer } from 'src/customers/types/Customer';
 
 @Injectable()
 export class CustomersService {
-
   private customers: Customer[] = [
     {
       id: 1,
-      email: "dtgiang@gmail.com",
+      email: 'dtgiang@gmail.com',
       name: 'Giang Dang',
-    },{
+    },
+    {
       id: 2,
-      email: "adam@gmail.com",
+      email: 'adam@gmail.com',
       name: 'Adam Dang',
-    },{
+    },
+    {
       id: 3,
-      email: "spencer@gmail.com",
+      email: 'spencer@gmail.com',
       name: 'Spencer Dang',
     },
-  ]
+  ];
 
   findCustomerById(id: number) {
     return this.customers.find((user) => user.id === id);

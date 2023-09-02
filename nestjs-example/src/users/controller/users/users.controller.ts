@@ -46,7 +46,7 @@ export class UsersController {
   @Get('id/:id')
   getById(@Param('id', ParseIntPipe) id: number) {
     const user = this.usersService.getUserById(id);
-    if(user) return new SerializedUser(user);
+    if (user) return new SerializedUser(user);
     else throw new UserNotFoundException();
   }
 
