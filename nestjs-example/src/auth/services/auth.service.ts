@@ -10,7 +10,7 @@ export class AuthService {
     const userDB = await this.userService.findUserByUsername(username);
     if (userDB) {
       console.log(password, ' ', userDB.password);
-      if(comparePassword(password, userDB.password)) {
+      if (comparePassword(password, userDB.password)) {
         console.log('Validate user successfully!');
         return userDB;
       } else {

@@ -8,9 +8,7 @@ import { LocalStrategy } from './strategy/local-strategy';
 import { SessionSerializer } from './utils/SessionSerializer';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-  ],
+  imports: [TypeOrmModule.forFeature([User])],
   controllers: [AuthController],
   providers: [
     {

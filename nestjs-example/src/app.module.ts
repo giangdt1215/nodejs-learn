@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './typeorm/User';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
+import { SessionEntity } from './typeorm/Session';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { PassportModule } from '@nestjs/passport';
       // password: 'root',
       password: 'admin',
       database: 'tutorial_db',
-      entities: [User],
+      entities: [User, SessionEntity],
       synchronize: true,
     }),
     AuthModule,
