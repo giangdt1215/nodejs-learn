@@ -36,6 +36,16 @@ export class UsersController {
     return this.usersService.getUsers();
   }
 
+  @Get('/createhier')
+  async createHier() {
+    return await this.usersService.createHier();
+  }
+
+  @Get('/testhier')
+  async getHier() {
+    return await this.usersService.testHier();
+  }
+
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':username')
   getUserByUsername(@Param('username') username: string) {
@@ -58,4 +68,6 @@ export class UsersController {
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
+
+  
 }

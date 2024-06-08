@@ -6,9 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/typeorm/User';
 import { LocalStrategy } from './strategy/local-strategy';
 import { SessionSerializer } from './utils/SessionSerializer';
+import { Category } from 'src/typeorm/Category';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [TypeOrmModule.forFeature([User, Category])],
   controllers: [AuthController],
   providers: [
     {

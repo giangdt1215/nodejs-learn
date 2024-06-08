@@ -6,6 +6,7 @@ import { User } from './typeorm/User';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { SessionEntity } from './typeorm/Session';
+import { Category } from './typeorm/Category';
 
 @Module({
   imports: [
@@ -16,10 +17,10 @@ import { SessionEntity } from './typeorm/Session';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      // password: 'root',
-      password: 'admin',
+      password: 'root',
+      // password: 'admin',
       database: 'tutorial_db',
-      entities: [User, SessionEntity],
+      entities: [User, SessionEntity, Category],
       synchronize: true,
     }),
     AuthModule,
